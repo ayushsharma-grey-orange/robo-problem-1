@@ -31,7 +31,16 @@ init([]) ->
         intensity => 0,
         period => 1
     },
-    ChildSpecs = [],
+    ChildSpecs = [
+        #{
+            id => robo_nav_server,
+            start => {robo_nav_server, start_link, []},
+            restart => permanent,
+            shutdown => 5000,
+            type => worker,
+            modules => [robo_nav_server]
+        }
+    ],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions
