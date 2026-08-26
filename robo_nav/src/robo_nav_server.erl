@@ -24,7 +24,7 @@
     print_grid/0,
     print_path/0,
     run/0,
-    run_random/0
+    run_random/1
     
 ]).
 
@@ -193,16 +193,17 @@ run()->
     remove_all_obstacles().
 
 
-run_random()->
+run_random(X)->
     % Set up robo and Goal
     set_robot({1,1}),
     set_goal({9,9}),
 
     % set up random obstacles
-    RandomObstacles = [{rand:uniform(9), rand:uniform(9)} || _ <- lists:seq(1, 7)],
+    RandomObstacles = [{rand:uniform(9), rand:uniform(9)} || _ <- lists:seq(1, X)],
 
     lists:foreach(fun add_obstacle/1, RandomObstacles),
 
+    print_grid(),
     % print the path
     print_path(),
     remove_all_obstacles().
