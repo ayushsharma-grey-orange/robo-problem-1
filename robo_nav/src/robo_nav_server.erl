@@ -19,7 +19,8 @@
     set_robot/1,
     set_goal/1,
     add_obstacle/1,
-    remove_obstacle/1
+    remove_obstacle/1,
+    find_path/0
     
 ]).
 
@@ -43,12 +44,24 @@ init([]) ->
 
     {ok, State}.
 
+
+handle_call(find_path, _From, State) ->
+    Grid = maps:get(grid, State),
+    Robot = maps:get(robot, State),
+    Goal = maps:get(goal, State),
+
+    Result = robo_nav_pathfinder:find_path(Grid, Robot, Goal),
+
+    {reply, Result, State};
 handle_call(get_state, _From, State) ->
     {reply, State, State}.
+
+
 handle_cast({set_robot, Position}, State) ->
     Grid = maps:get(grid, State),
-    Valid = robo_nav_grid:valid_position(Grid, Position),
-
+    Valid = robo_nav_grid:valid_position(Grid, Position)
+            andalso not robo_nav_grid:blocked(Grid, Position),
+    
     case Valid of
         false ->
             {noreply, State};
@@ -59,7 +72,8 @@ handle_cast({set_robot, Position}, State) ->
 
 handle_cast({set_goal, Position}, State) ->
     Grid = maps:get(grid, State),
-    Valid = robo_nav_grid:valid_position(Grid, Position),
+    Valid = robo_nav_grid:valid_position(Grid, Position)
+            andalso not robo_nav_grid:blocked(Grid, Position),
 
     case Valid of
         false ->
@@ -69,12 +83,32 @@ handle_cast({set_goal, Position}, State) ->
             {noreply, NewState}
     end;
 
+% handle_cast({add_obstacle, Position}, State) ->
+%     Grid = maps:get(grid, State),
+%     NewGrid = robo_nav_grid:add_obstacle(Grid, Position),
+%     NewState = State#{grid := NewGrid},
+
+%     {noreply, NewState};
+
 handle_cast({add_obstacle, Position}, State) ->
     Grid = maps:get(grid, State),
-    NewGrid = robo_nav_grid:add_obstacle(Grid, Position),
-    NewState = State#{grid := NewGrid},
+    Robot = maps:get(robot, State),
+    Goal = maps:get(goal, State),
 
-    {noreply, NewState};
+    Valid =
+        robo_nav_grid:valid_position(Grid, Position)
+        andalso Position =/= Robot
+        andalso Position =/= Goal,
+
+    case Valid of
+        true ->
+            NewGrid = robo_nav_grid:add_obstacle(Grid, Position),
+            NewState = State#{grid := NewGrid},
+            {noreply, NewState};
+
+        false ->
+            {noreply, State}
+    end;
 
 handle_cast({remove_obstacle, Position}, State) ->
     Grid = maps:get(grid, State),
@@ -106,3 +140,6 @@ add_obstacle(Position) ->
 
 remove_obstacle(Position) ->
     gen_server:cast(?MODULE, {remove_obstacle, Position}).
+
+find_path() ->
+    gen_server:call(?MODULE, find_path).
