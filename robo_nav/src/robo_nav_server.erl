@@ -22,7 +22,9 @@
     remove_obstacle/1,
     find_path/0,
     print_grid/0,
-    print_path/0
+    print_path/0,
+    run/0,
+    run_random/0
     
 ]).
 
@@ -46,7 +48,12 @@ init([]) ->
 
     {ok, State}.
 
-
+handle_call(remove_all_obstacles, _From, State) ->
+    %% Assuming your state is a map containing an 'obstacles' key
+    Grid = maps:get(grid, State),
+    NewGrid = Grid#{obstacles => sets:new()},
+    NewState = State#{grid => NewGrid},
+    {reply, ok, NewState};
 handle_call(find_path, _From, State) ->
     Grid = maps:get(grid, State),
     Robot = maps:get(robot, State),
@@ -150,6 +157,55 @@ print_grid() ->
     robo_nav_grid:print_grid(get_state()).
 
 print_path()->
-    {ok,Path}=find_path(),
-    ToPrint=robo_nav_grid:print_path(get_state(),Path),
-    io:format("Path: ~p~n", [ToPrint]).
+    Result=find_path(),
+    case Result of
+        {error, Reason} ->
+            io:format("Error finding path: ~p~n", [Reason]);
+        {ok, Path} ->
+            ToPrint=robo_nav_grid:print_path(get_state(),Path),
+            io:format("Path: ~p~n", [ToPrint])
+    end.
+
+run()->
+    % Set up robo and Goal
+    set_robot({1,1}),
+    set_goal({9,9}),
+
+
+    % set up obstacles
+    add_obstacle({2,1}),
+    add_obstacle({2,2}),
+    add_obstacle({2,3}),
+    add_obstacle({2,4}),
+    add_obstacle({2,5}),
+    add_obstacle({5,5}),
+    add_obstacle({5,4}),
+    add_obstacle({5,3}),
+    add_obstacle({5,6}),
+    add_obstacle({5,7}),
+    add_obstacle({5,8}),
+
+    add_obstacle({5,9}),
+
+
+% print the path
+    print_path(),
+    remove_all_obstacles().
+
+
+run_random()->
+    % Set up robo and Goal
+    set_robot({1,1}),
+    set_goal({9,9}),
+
+    % set up random obstacles
+    RandomObstacles = [{rand:uniform(9), rand:uniform(9)} || _ <- lists:seq(1, 7)],
+
+    lists:foreach(fun add_obstacle/1, RandomObstacles),
+
+    % print the path
+    print_path(),
+    remove_all_obstacles().
+
+remove_all_obstacles()->
+    gen_server:call(?MODULE, remove_all_obstacles).

@@ -152,7 +152,7 @@ print_path( State, Path) ->
     Cols = maps:get(cols, Grid),
     Obstacles = maps:get(obstacles, Grid),
 
-    io:format("Grid (~p x ~p) with Path:~n", [Rows, Cols]),
+    io:format("Grid (~p x ~p),~n Steps Taken=~p with Path:~n", [Rows, Cols,length(Path)]),
     
     %% Convert Path list into a set/map for efficient O(1) lookup
     PathSet = maps:from_list([{Coord, true} || Coord <- Path]),
