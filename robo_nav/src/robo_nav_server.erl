@@ -20,7 +20,9 @@
     set_goal/1,
     add_obstacle/1,
     remove_obstacle/1,
-    find_path/0
+    find_path/0,
+    print_grid/0,
+    print_path/0
     
 ]).
 
@@ -143,3 +145,11 @@ remove_obstacle(Position) ->
 
 find_path() ->
     gen_server:call(?MODULE, find_path).
+
+print_grid() ->
+    robo_nav_grid:print_grid(get_state()).
+
+print_path()->
+    {ok,Path}=find_path(),
+    ToPrint=robo_nav_grid:print_path(get_state(),Path),
+    io:format("Path: ~p~n", [ToPrint]).
