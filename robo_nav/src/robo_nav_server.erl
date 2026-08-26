@@ -206,6 +206,7 @@ run_random(X)->
     print_grid(),
     % print the path
     print_path(),
+    % remove obstances 
     remove_all_obstacles().
 
 remove_all_obstacles()->

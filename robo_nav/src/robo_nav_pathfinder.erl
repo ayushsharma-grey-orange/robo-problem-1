@@ -17,6 +17,7 @@ bfs(_Grid, Goal, Goal) ->
     {ok, [Goal]};
 
 bfs(Grid, Start, Goal) ->
+    % Queue stores {current,[Visited]} positions
     Queue = queue:from_list([{Start, [Start]}]),
     Visited = sets:add_element(Start, sets:new()),
 
@@ -24,13 +25,22 @@ bfs(Grid, Start, Goal) ->
 
 
 bfs_loop(Grid, Goal, Queue, Visited) ->
+
+%      TAKING first element from the queue   
     case queue:out(Queue) of
         {empty, _Queue} ->
             {error, no_path};
 
+    % Current is the current grid
+    % path is the path traversed so far
+    %  And Queue1 is the queue after removing this item.
         {{value, {Current, Path}}, Queue1} ->
+
+            % Find the Neighbours of the current position
             Neighbors = robo_nav_grid:neighbors(Grid, Current),
 
+            % This checks whether the goal is in the neighbors and if 
+        % it is not then it adds the neighbors to the queue and continues the search.
             case find_goal(Neighbors, Goal, Visited) of
                 {found, Goal} ->
                     {ok, Path ++ [Goal]};
@@ -94,10 +104,15 @@ find_goal([_ | Rest], Goal, Visited) ->
 %             )
 %     end.
 
+
+
+%  No neighbor to add
 add_neighbors([], _Path, Queue, Visited) ->
     {Queue, Visited};
 
 add_neighbors([Neighbor | Rest], Path, Queue, Visited) ->
+    % Adds the neighbor to the queue if it has not been visited yet. 
+    % If it has been visited, it skips to the next neighbor in the Array.
     case sets:is_element(Neighbor, Visited) of
         true ->
             add_neighbors(Rest, Path, Queue, Visited);
