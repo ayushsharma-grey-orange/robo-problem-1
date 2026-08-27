@@ -24,7 +24,11 @@
     print_grid/0,
     print_path/0,
     run/0,
-    run_random/1
+    run_random/1,
+    run_two_robots/0,
+    add_second_robot/2,
+    simulate_two_robots/0,
+    find_path/2
     
 ]).
 
@@ -48,6 +52,21 @@ init([]) ->
 
     {ok, State}.
 
+
+handle_call({add_second_robot, Start, Goal}, _From, State) ->
+    Grid = maps:get(grid, State),
+    ValidStart = robo_nav_grid:valid_position(Grid, Start)
+                 andalso not robo_nav_grid:blocked(Grid, Start),
+    ValidGoal = robo_nav_grid:valid_position(Grid, Goal)
+                andalso not robo_nav_grid:blocked(Grid, Goal),
+
+    case {ValidStart, ValidGoal} of
+        {true, true} ->
+            NewState = State#{robot2=> Start, goal2 => Goal},
+            {reply, ok, NewState};
+        _ ->
+            {reply, {error, invalid_position}, State}
+    end;
 handle_call(remove_all_obstacles, _From, State) ->
     %% Assuming your state is a map containing an 'obstacles' key
     Grid = maps:get(grid, State),
@@ -61,6 +80,11 @@ handle_call(find_path, _From, State) ->
 
     Result = robo_nav_pathfinder:find_path(Grid, Robot, Goal),
 
+    {reply, Result, State};
+
+handle_call({find_path_2, Start, Goal}, _From, State) ->
+    Grid = maps:get(grid, State),
+    Result = robo_nav_pathfinder:find_path(Grid, Start, Goal),
     {reply, Result, State};
 handle_call(get_state, _From, State) ->
     {reply, State, State}.
@@ -153,6 +177,9 @@ remove_obstacle(Position) ->
 find_path() ->
     gen_server:call(?MODULE, find_path).
 
+find_path(Start, Goal) ->
+    gen_server:call(?MODULE, {find_path_2, Start, Goal}).
+
 print_grid() ->
     robo_nav_grid:print_grid(get_state()).
 
@@ -209,5 +236,29 @@ run_random(X)->
     % remove obstances 
     remove_all_obstacles().
 
+run_two_robots()->
+    add_second_robot({3,4},{7,8}),
+    simulate_two_robots().
+
 remove_all_obstacles()->
     gen_server:call(?MODULE, remove_all_obstacles).
+
+add_second_robot(Start={_X1, _Y1},Goal={_X2, _Y2})->
+    % robo_nav_server:add_second_robot({3,4},{7,8}).
+    gen_server:call(?MODULE, {add_second_robot, Start, Goal}).
+
+
+simulate_two_robots()->
+%   robo_nav_server:simulate_two_robots().
+    State=get_state(),
+    {ok,Robo1Path}=find_path(),
+    io:format("Robo1 : ~p~n", [Robo1Path]),
+
+    {ok,Robo2Path}=find_path(maps:get(robot2,State),maps:get(goal2,State)),
+    io:format("Robo2 Path: ~p~n", [Robo2Path]),
+
+    robo_nav_window:simulate_two_robots(Robo1Path,Robo2Path,State),
+    % Now you can simulate the movement of both robots along their paths.
+
+
+    0.
