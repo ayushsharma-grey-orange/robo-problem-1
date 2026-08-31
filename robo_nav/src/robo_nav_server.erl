@@ -237,19 +237,27 @@ run_random(X)->
     remove_all_obstacles().
 
 run_two_robots()->
-    add_second_robot({3,4},{7,8}),
+    set_robot({1,1}),
+    set_goal({3,4}),
+    remove_all_obstacles(),
+    robo_nav_server:add_second_robot({1,3},{3,2}),
     simulate_two_robots().
 
 remove_all_obstacles()->
     gen_server:call(?MODULE, remove_all_obstacles).
 
 add_second_robot(Start={_X1, _Y1},Goal={_X2, _Y2})->
-    % robo_nav_server:add_second_robot({3,4},{7,8}).
+    % robo_nav_server:add_second_robot({2,1},{2,3}).
+    % robo_nav_server:set_robot({1,2}).
+    % robo_nav_server:set_goal({3,2}).
     gen_server:call(?MODULE, {add_second_robot, Start, Goal}).
 
 
 simulate_two_robots()->
 %   robo_nav_server:simulate_two_robots().
+    add_second_robot({2,1},{2,3}),
+    set_robot({1,2}),
+    set_goal({3,2}),
     State=get_state(),
     {ok,Robo1Path}=find_path(),
     io:format("Robo1 : ~p~n", [Robo1Path]),
